@@ -1,6 +1,6 @@
 # SkyRoute - Airline Management Website
 
-A modern, full-stack web application for managing airline operations and bookings. Built with Next.js, TypeScript, and Tailwind CSS, SkyRoute offers a seamless experience for customers.
+A modern, full-stack web application for managing airline operations and bookings. Built with Next.js, TypeScript, and Tailwind CSS, SkyRoute offers a seamless ans smooth experience for customers.
 
 ## Features
 
