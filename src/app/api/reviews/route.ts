@@ -17,12 +17,24 @@ export async function GET(request: Request) {
     if (airline) query.airline = airline;
     if (flightNumber) query.flightNumber = flightNumber;
 
+    // Log the query parameters
+    console.log('Fetching reviews with query:', query);
+
     const reviews = await Review.find(query)
       .sort({ date: -1 })
       .populate('userId', 'name email')
       .limit(50);
 
-    return NextResponse.json(reviews);
+    // Log the number of reviews found
+    console.log(`Found ${reviews.length} reviews`);
+
+    return NextResponse.json(reviews, {
+      headers: {
+        'Cache-Control': 'no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   } catch (error) {
     console.error('Reviews fetch error:', error);
     return NextResponse.json(
