@@ -6,6 +6,36 @@ import { User } from "@/models/User";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
+type SeatPreference = "Window" | "Aisle" | "Middle" | "No Preference";
+type MealPreference = "Vegetarian" | "Non-Vegetarian" | "Vegan" | "No Preference";
+
+interface UserDocument {
+  name: string;
+  email: string;
+  phone?: string;
+  preferences?: {
+    seat?: SeatPreference;
+    meal?: MealPreference;
+    notifications?: {
+      flightUpdates?: boolean;
+      checkInReminders?: boolean;
+      promotionalOffers?: boolean;
+    };
+  };
+  bookingHistory?: Array<{
+    flightId?: string;
+    airline?: string;
+    flightNumber?: string;
+    origin?: string;
+    destination?: string;
+    departureTime?: Date;
+    arrivalTime?: Date;
+    duration?: string;
+    price?: number;
+    status?: string;
+  }>;
+}
+
 async function getUserProfile() {
   const session = await getServerSession();
   if (!session?.user?.email) {
@@ -13,43 +43,46 @@ async function getUserProfile() {
   }
 
   await connectDB();
-  const user = await User.findOne({ email: session.user.email })
-    .select('-password');
+  const userDoc = await User.findOne({ email: session.user.email })
+    .select('-password')
+    .lean();
 
-  if (!user) {
+  if (!userDoc) {
     redirect('/auth/signin');
   }
 
-  return {
-    name: user.name,
-    email: user.email,
-    phone: user.phone || "",
+  // Type assertion after validation
+  const user = userDoc as unknown as UserDocument;
+
+  // Create a clean profile object with only the data we need
+  const profile = {
+    name: user.name || '',
+    email: user.email || '',
+    phone: user.phone || '',
     preferences: {
-      seat: user.preferences.seat || "No Preference",
-      meal: user.preferences.meal || "No Preference",
+      seat: (user.preferences?.seat || 'No Preference') as SeatPreference,
+      meal: (user.preferences?.meal || 'No Preference') as MealPreference,
       notifications: {
-        flightUpdates: user.preferences.notifications.flightUpdates,
-        checkInReminders: user.preferences.notifications.checkInReminders,
-        promotionalOffers: user.preferences.notifications.promotionalOffers,
+        flightUpdates: user.preferences?.notifications?.flightUpdates || false,
+        checkInReminders: user.preferences?.notifications?.checkInReminders || false,
+        promotionalOffers: user.preferences?.notifications?.promotionalOffers || false,
       },
     },
-    bookingHistory: user.bookingHistory?.map((booking: {
-      flightId: string;
-      airline: string;
-      flightNumber: string;
-      origin: string;
-      destination: string;
-      departureTime: Date;
-      arrivalTime: Date;
-      duration: string;
-      price: number;
-      status: string;
-    }) => ({
-      ...booking,
-      departureTime: booking.departureTime.toISOString(),
-      arrivalTime: booking.arrivalTime.toISOString(),
-    })) || [],
+    bookingHistory: (user.bookingHistory || []).map(booking => ({
+      flightId: booking.flightId || '',
+      airline: booking.airline || '',
+      flightNumber: booking.flightNumber || '',
+      origin: booking.origin || '',
+      destination: booking.destination || '',
+      departureTime: booking.departureTime ? new Date(booking.departureTime).toISOString() : new Date().toISOString(),
+      arrivalTime: booking.arrivalTime ? new Date(booking.arrivalTime).toISOString() : new Date().toISOString(),
+      duration: booking.duration || '',
+      price: booking.price || 0,
+      status: booking.status || 'unknown'
+    }))
   };
+
+  return profile;
 }
 
 export default async function ProfilePage() {
