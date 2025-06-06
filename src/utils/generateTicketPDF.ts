@@ -1,161 +1,68 @@
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
-
-interface FlightSegment {
-  departure: {
-    iataCode: string;
-    terminal?: string;
-    at: string;
-  };
-  arrival: {
-    iataCode: string;
-    terminal?: string;
-    at: string;
-  };
-  carrierCode: string;
-  number: string;
-}
 
 interface Flight {
   id: string;
   itineraries: Array<{
-    segments: FlightSegment[];
+    segments: Array<{
+      departure: {
+        iataCode: string;
+        terminal?: string;
+        at: string;
+      };
+      arrival: {
+        iataCode: string;
+        terminal?: string;
+        at: string;
+      };
+      carrierCode: string;
+      number: string;
+    }>;
   }>;
   price: {
     total: string;
     currency: string;
   };
+  airline?: string;
 }
 
-export const generateTicketPDF = (flight: Flight, passengerName: string) => {
+export const generateTicketPDF = (flight: Flight, passengerName: string, seatNumber: number) => {
   const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 10; 
-  const leftPadding = 40; 
-  
+  const firstSegment = flight.itineraries[0].segments[0];
+  const lastSegment = flight.itineraries[0].segments[flight.itineraries[0].segments.length - 1];
 
-  const centerText = (text: string, y: number) => {
-    const textWidth = doc.getStringUnitWidth(text) * doc.getFontSize() / doc.internal.scaleFactor;
-    const x = (pageWidth - textWidth) / 2;
-    doc.text(text, x, y);
-  };
-
-  doc.setDrawColor(0, 105, 255); 
-  doc.setLineWidth(0.5);
-  doc.roundedRect(margin, margin, pageWidth - 2 * margin, pageHeight - 2 * margin, 5, 5);
-
-  doc.setDrawColor(0, 105, 255);
-  doc.setLineWidth(0.3);
-  doc.line(margin, 35, pageWidth - margin, 35);
-
-  doc.setLineDashPattern([1, 1], 0);
-  doc.line(margin, pageHeight - 30, pageWidth - margin, pageHeight - 30);
-  doc.setLineDashPattern([], 0);
-
+  // Set font
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(24);
-  doc.setTextColor(0, 105, 255);
-  centerText('SkyRoute', 25);
-  
+  doc.text("Flight Ticket", 105, 20, { align: "center" });
+
+  // Passenger Information
   doc.setFontSize(12);
-  doc.setTextColor(130, 130, 130);
-  centerText('BOARDING PASS', 32);
+  doc.text("Passenger Information", 20, 40);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Name: ${passengerName}`, 20, 50);
+  doc.text(`Seat: ${seatNumber}`, 20, 60);
 
-  // Add passenger name
-  doc.setFontSize(10);
-  doc.setTextColor(130, 130, 130);
-  doc.text('PASSENGER:', leftPadding, 45);
-  doc.setTextColor(0);
-  doc.setFontSize(12);
-  doc.text(passengerName, leftPadding + 25, 45);
+  // Flight Information
+  doc.setFont("helvetica", "bold");
+  doc.text("Flight Information", 20, 80);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Flight: ${firstSegment.carrierCode} ${firstSegment.number}`, 20, 90);
+  doc.text(`From: ${firstSegment.departure.iataCode}`, 20, 100);
+  doc.text(`To: ${lastSegment.arrival.iataCode}`, 20, 110);
+  doc.text(`Departure: ${format(new Date(firstSegment.departure.at), 'PPpp')}`, 20, 120);
+  doc.text(`Arrival: ${format(new Date(lastSegment.arrival.at), 'PPpp')}`, 20, 130);
+  if (firstSegment.departure.terminal) {
+    doc.text(`Terminal: ${firstSegment.departure.terminal}`, 20, 140);
+  }
 
-  // Move booking reference down
-  doc.setFontSize(10);
-  doc.setTextColor(130, 130, 130);
-  doc.text('BOOKING REF:', leftPadding, 55);
-  doc.setTextColor(0);
-  doc.setFontSize(12);
-  doc.text(flight.id, leftPadding + 25, 55);
+  // Price Information
+  doc.setFont("helvetica", "bold");
+  doc.text("Price Information", 20, 160);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Total: ${flight.price.currency} ${flight.price.total}`, 20, 170);
 
-  let yPosition = 70;
-
-  flight.itineraries[0].segments.forEach((segment, index) => {
-    doc.setFontSize(10);
-    doc.setTextColor(130, 130, 130);
-    doc.text('FLIGHT', leftPadding, yPosition);
-    doc.setTextColor(0);
-    doc.setFontSize(12);
-    doc.text(`${segment.carrierCode} ${segment.number}`, leftPadding + 30, yPosition);
-
-    yPosition += 12;
-
-    const lineStartX = leftPadding + 40;
-    const lineEndX = pageWidth - margin - 40;
-    const lineY = yPosition + 8;
-    
-    doc.setDrawColor(0, 105, 255);
-    doc.setLineWidth(0.3);
-    doc.setLineDashPattern([3, 3], 0);
-    doc.line(lineStartX, lineY, lineEndX, lineY);
-    doc.setLineDashPattern([], 0);
-    
-    const planeX = (pageWidth / 2);
-    doc.setFillColor(0, 105, 255);
-    doc.circle(planeX, lineY, 2, 'F');
-
-    // Departure
-    doc.setFontSize(24);
-    doc.setTextColor(0);
-    doc.text(segment.departure.iataCode, leftPadding, yPosition + 5);
-    doc.setFontSize(10);
-    doc.setTextColor(130, 130, 130);
-    doc.text(format(new Date(segment.departure.at), 'HH:mm'), leftPadding, yPosition + 15);
-    doc.text(format(new Date(segment.departure.at), 'MMM d, yyyy'), leftPadding, yPosition + 20);
-    if (segment.departure.terminal) {
-      doc.text(`Terminal ${segment.departure.terminal}`, leftPadding, yPosition + 25);
-    }
-
-    // Arrival
-    doc.setFontSize(24);
-    doc.setTextColor(0);
-    doc.text(segment.arrival.iataCode, pageWidth - margin - 70, yPosition + 5);
-    doc.setFontSize(10);
-    doc.setTextColor(130, 130, 130);
-    doc.text(format(new Date(segment.arrival.at), 'HH:mm'), pageWidth - margin - 70, yPosition + 15);
-    doc.text(format(new Date(segment.arrival.at), 'MMM d, yyyy'), pageWidth - margin - 70, yPosition + 20);
-    if (segment.arrival.terminal) {
-      doc.text(`Terminal ${segment.arrival.terminal}`, pageWidth - margin - 70, yPosition + 25);
-    }
-
-    yPosition += 35;
-
-    // Adding layover information if there's another segment
-    if (index < flight.itineraries[0].segments.length - 1) {
-      const nextSegment = flight.itineraries[0].segments[index + 1];
-      const layoverDuration = Math.round(
-        (new Date(nextSegment.departure.at).getTime() -
-          new Date(segment.arrival.at).getTime()) /
-          (1000 * 60)
-      );
-      
-      doc.setFillColor(240, 240, 240);
-      const layoverY = yPosition - 5;
-      doc.roundedRect(leftPadding, layoverY, pageWidth - leftPadding - margin - 30, 15, 3, 3, 'F');
-      
-      doc.setFontSize(10);
-      doc.setTextColor(130, 130, 130);
-      doc.text(`${layoverDuration} minute layover at ${segment.arrival.iataCode} Airport`, leftPadding + 10, layoverY + 10);
-      
-      yPosition += 20;
-    }
-  });
-
-  doc.setFontSize(9);
-  doc.setTextColor(130, 130, 130);
-  centerText('Thank you for choosing SkyRoute', pageHeight - 20);
-  centerText('Keep this ticket handy for your journey', pageHeight - 15);
-
-  // Download the PDF with passenger name in the filename
-  const safePassengerName = passengerName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-  doc.save(`skyroute-ticket-${safePassengerName}-${flight.id}.pdf`);
+  // Save the PDF
+  const fileName = `ticket_${firstSegment.carrierCode}${firstSegment.number}_${passengerName.replace(/\s+/g, '_')}.pdf`;
+  doc.save(fileName);
 }; 

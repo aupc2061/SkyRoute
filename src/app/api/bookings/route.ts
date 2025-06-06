@@ -4,7 +4,6 @@ import connectDB from '@/lib/db';
 import { User } from '@/models/User';
 
 interface Booking {
-  _id: string;
   flightId: string;
   airline: string;
   flightNumber: string;
@@ -131,10 +130,10 @@ export async function PATCH(request: Request) {
 
     await connectDB();
     
-    // Get user and validate booking ownership
+    // Get user and validate booking ownership using flightId
     const user = await User.findOne({ 
       email: session.user.email,
-      'bookingHistory._id': bookingId 
+      'bookingHistory.flightId': bookingId 
     });
 
     if (!user) {
@@ -144,11 +143,11 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Update the specific booking in the array
+    // Update the specific booking in the array using flightId
     const updatedUser = await User.findOneAndUpdate(
       { 
         email: session.user.email,
-        'bookingHistory._id': bookingId
+        'bookingHistory.flightId': bookingId
       },
       { 
         $set: {
@@ -171,7 +170,7 @@ export async function PATCH(request: Request) {
 
     // Find and return the updated booking
     const updatedBooking = updatedUser.bookingHistory.find(
-      (booking: Booking) => booking._id.toString() === bookingId
+      (booking: Booking) => booking.flightId === bookingId
     );
 
     return NextResponse.json({ 

@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, addDays, isBefore } from "date-fns";
 import { Plane, CalendarDays, Edit3, Bell, Save } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,7 @@ interface UserProfileClientProps {
 export function UserProfileClient({ initialProfile }: UserProfileClientProps) {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [bookingHistory, setBookingHistory] = useState(initialProfile.bookingHistory);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -96,6 +97,52 @@ export function UserProfileClient({ initialProfile }: UserProfileClientProps) {
       });
     }
   }
+
+  const handleCheckIn = async (flightId: string) => {
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bookingId: flightId,
+          status: 'Checked In'
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to check in');
+      }
+      // Update local state
+      setBookingHistory(prev => {
+        if (!prev) return [];
+        return prev.map(booking => 
+          booking.flightId === flightId 
+            ? { ...booking, status: 'Checked In' }
+            : booking
+        );
+      });
+
+      toast({
+        title: "Check-in Successful",
+        description: "You have successfully checked in for your flight.",
+      });
+    } catch (error) {
+      toast({
+        title: "Check-in Failed",
+        description: error instanceof Error ? error.message : "Failed to check in for flight",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const canCheckIn = (departureTime: string, status: string) => {
+    const departureDate = new Date(departureTime);
+    const twoDaysFromNow = addDays(new Date(), 2);
+    return status === 'Confirmed' && isBefore(departureDate, twoDaysFromNow);
+  };
 
   return (
     <div className="space-y-6">
@@ -282,9 +329,9 @@ export function UserProfileClient({ initialProfile }: UserProfileClientProps) {
           <CardDescription>A record of your past flights booked with SkyRoutes.</CardDescription>
         </CardHeader>
         <CardContent>
-          {initialProfile.bookingHistory && initialProfile.bookingHistory.length > 0 ? (
+          {bookingHistory && bookingHistory.length > 0 ? (
             <ul className="space-y-4">
-              {initialProfile.bookingHistory.map((booking) => (
+              {bookingHistory.map((booking) => (
                 <li key={booking.flightId} className="p-4 border rounded-md shadow-sm">
                   <div className="flex justify-between items-start">
                     <div>
@@ -295,9 +342,24 @@ export function UserProfileClient({ initialProfile }: UserProfileClientProps) {
                         {booking.airline} - {booking.flightNumber}
                       </p>
                     </div>
-                    <Badge variant={booking.status === "Arrived" ? "default" : "secondary"}>
-                      {booking.status}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge 
+                        variant={booking.status === "Checked In" ? "outline" : "secondary"}
+                        className={booking.status === "Checked In" ? "border-accent text-accent" : ""}
+                      >
+                        {booking.status}
+                      </Badge>
+                      {canCheckIn(booking.departureTime, booking.status) && (
+                        <Button
+                          variant="default"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                          onClick={() => handleCheckIn(booking.flightId)}
+                          size="sm"
+                        >
+                          Check-in
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-2 text-sm text-muted-foreground flex items-center">
                     <CalendarDays className="h-4 w-4 mr-2" />

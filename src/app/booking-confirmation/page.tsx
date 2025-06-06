@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { generateTicketPDF } from "@/utils/generateTicketPDF";
 import { useSession } from "next-auth/react";
+import { v4 as uuidv4 } from 'uuid';
 
 interface Flight {
   id: string;
@@ -41,6 +42,7 @@ export default function BookingConfirmationPage() {
   const { data: session } = useSession();
   const [flight, setFlight] = useState<Flight | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     // Get flight data from localStorage
@@ -88,29 +90,96 @@ export default function BookingConfirmationPage() {
     fetchUserData();
   }, [session]);
 
-  const handleDownloadTicket = () => {
+  const handleDownloadTicket = async () => {
     try {
-      if (!flight) return;
+      if (!flight || !session?.user?.email) return;
 
-      // Generate and download PDF ticket with user name
-      generateTicketPDF(flight, userName);
+      setIsProcessing(true);
+
+      // First, try to get a seat
+      const flightNumber = flight.itineraries[0].segments[0].number;
+      const seatResponse = await fetch('/api/flight-seats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          flightNumber
+        }),
+      });
+
+      if (!seatResponse.ok) {
+        const error = await seatResponse.json();
+        throw new Error(error.error || 'Failed to assign seat');
+      }
+
+      const seatData = await seatResponse.json();
+      const assignedSeat = seatData.seatNumber;
+
+      // Then save the booking with the seat number
+      const firstSegment = flight.itineraries[0].segments[0];
+      const lastSegment = flight.itineraries[0].segments[flight.itineraries[0].segments.length - 1];
+      
+      // Generate a unique booking ID that includes flight number and date
+      const uniqueBookingId = `${firstSegment.number}-${format(new Date(firstSegment.departure.at), 'yyyy-MM-dd')}-${uuidv4().slice(0, 8)}`;
+      
+      const bookingData = {
+        flightId: uniqueBookingId, // Use our unique booking ID instead of flight.id
+        airline: firstSegment.carrierCode,
+        flightNumber: firstSegment.number,
+        origin: firstSegment.departure.iataCode,
+        destination: lastSegment.arrival.iataCode,
+        departureTime: firstSegment.departure.at,
+        arrivalTime: lastSegment.arrival.at,
+        duration: calculateDuration(firstSegment.departure.at, lastSegment.arrival.at),
+        price: parseFloat(flight.price.total),
+        status: 'Confirmed',
+        seatNumber: assignedSeat
+      };
+
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save booking');
+      }
+
+      // Generate and download PDF ticket with user name and seat number
+      generateTicketPDF(flight, userName, assignedSeat);
       
       // Show success message
       toast({
-        title: "Ticket Downloaded!",
-        description: "Your ticket has been downloaded successfully.",
+        title: "Booking Confirmed!",
+        description: `Your ticket has been downloaded and booking saved successfully. Your seat number is ${assignedSeat}.`,
         variant: "default",
         duration: 3000,
       });
 
     } catch (error) {
-      console.error('PDF generation error:', error);
+      console.error('Booking/PDF generation error:', error);
       toast({
-        title: "Download Failed",
-        description: "Failed to generate ticket. Please try again.",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to process booking and generate ticket.",
         variant: "destructive",
       });
+    } finally {
+      setIsProcessing(false);
     }
+  };
+
+  const calculateDuration = (departureTime: string, arrivalTime: string) => {
+    const departure = new Date(departureTime);
+    const arrival = new Date(arrivalTime);
+    const durationInMinutes = Math.round((arrival.getTime() - departure.getTime()) / (1000 * 60));
+    const hours = Math.floor(durationInMinutes / 60);
+    const minutes = durationInMinutes % 60;
+    return `${hours}h ${minutes}m`;
   };
 
   if (!flight) {
@@ -208,8 +277,9 @@ export default function BookingConfirmationPage() {
             <Button 
               className="bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={handleDownloadTicket}
+              disabled={isProcessing}
             >
-              Download Ticket
+              {isProcessing ? "Processing..." : "Download Ticket"}
             </Button>
           </CardFooter>
         </Card>

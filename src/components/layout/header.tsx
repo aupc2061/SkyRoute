@@ -33,7 +33,7 @@ export default function Header() {
       href={href}
       className={cn(
         "text-sm font-medium transition-colors hover:text-primary",
-        pathname === href ? "text-primary" : "text-muted-foreground"
+        pathname === href ? "text-primary" : "text-white"
       )}
       onClick={() => setIsSheetOpen(false)}
     >
@@ -42,10 +42,10 @@ export default function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-black/20 backdrop-blur-sm">
       <div className="container flex h-16 items-center">
         <div className="mr-4 flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
+          <Link href="/" className="mr-6 flex items-center space-x-2 text-white">
             <SiteLogo skipLink />
           </Link>
           <nav className="hidden md:flex items-center space-x-6">
@@ -58,7 +58,7 @@ export default function Header() {
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-white hover:text-primary">
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -73,13 +73,13 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild variant="ghost">
+            <Button asChild variant="ghost" className="text-white hover:text-primary">
               <Link href="/auth/signin">Sign In</Link>
             </Button>
           )}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden text-white hover:text-primary">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>

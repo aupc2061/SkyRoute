@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FlightSearchForm from "@/components/flight-search-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 interface Flight {
   id: string;
@@ -30,14 +31,32 @@ interface Flight {
   };
   airline: string;
   airlineLogoUrl: string;
+  availableSeats?: number;
 }
 
 export default function FlightSearchPage() {
   const router = useRouter();
   const [flights, setFlights] = useState<Flight[]>([]);
 
-  const handleSearchResults = (results: Flight[]) => {
-    setFlights(results);
+  const handleSearchResults = async (results: Flight[]) => {
+    // Get available seats for each flight
+    const flightsWithSeats = await Promise.all(
+      results.map(async (flight) => {
+        const flightNumber = flight.itineraries[0].segments[0].number;
+        try {
+          const response = await fetch(`/api/flight-seats?flightNumber=${flightNumber}`);
+          const data = await response.json();
+          return {
+            ...flight,
+            availableSeats: data.availableSeats
+          };
+        } catch (error) {
+          console.error('Error fetching seats:', error);
+          return flight;
+        }
+      })
+    );
+    setFlights(flightsWithSeats);
   };
 
   const handleFlightSelect = (flight: Flight) => {
@@ -74,9 +93,14 @@ export default function FlightSearchPage() {
                       {flight.itineraries[0].segments[0].departure.iataCode} →{" "}
                       {flight.itineraries[0].segments[flight.itineraries[0].segments.length - 1].arrival.iataCode}
                     </span>
-                    <span>
-                      {flight.price.currency} {flight.price.total}
-                    </span>
+                    <div className="flex items-center gap-4">
+                      <Badge variant="outline" className="text-primary">
+                        {flight.availableSeats !== undefined ? `${flight.availableSeats} seats left` : '30 seats left'}
+                      </Badge>
+                      <span>
+                        {flight.price.currency} {flight.price.total}
+                      </span>
+                    </div>
                   </CardTitle>
                   <CardDescription>
                     {flight.itineraries[0].segments.map((segment, index) => (

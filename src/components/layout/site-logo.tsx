@@ -9,8 +9,8 @@ interface SiteLogoProps {
 export function SiteLogo({ className = '', skipLink = false }: SiteLogoProps) {
   const content = (
     <>
-      <Plane className="h-6 w-6" />
-      <span className="font-bold">SkyRoutes</span>
+      <Plane className="h-6 w-6 text-white" />
+      <span className="font-bold text-white">SkyRoutes</span>
     </>
   );
 
@@ -19,7 +19,7 @@ export function SiteLogo({ className = '', skipLink = false }: SiteLogoProps) {
   }
 
   return (
-    <Link href="/" className={`flex items-center gap-2 text-primary hover:text-primary/90 transition-colors ${className}`}>
+    <Link href="/" className={`flex items-center gap-2 text-white hover:text-primary transition-colors ${className}`}>
       {content}
     </Link>
   );
