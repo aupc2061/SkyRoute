@@ -9,7 +9,7 @@ import { ArrowLeft, Plane, User } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { generateTicketPDF } from "@/utils/generateTicketPDF";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { v4 as uuidv4 } from 'uuid';
 
 interface Flight {
@@ -91,20 +91,26 @@ export default function BookingConfirmationPage() {
   }, [session]);
 
   const handleDownloadTicket = async () => {
+    if (!session?.user) {
+      // Not signed in, redirect to sign in page
+      signIn();
+      return;
+    }
     try {
       if (!flight || !session?.user?.email) return;
-
       setIsProcessing(true);
 
       // First, try to get a seat
       const flightNumber = flight.itineraries[0].segments[0].number;
+      const flightDate = flight.itineraries[0].segments[0].departure.at.split('T')[0];
       const seatResponse = await fetch('/api/flight-seats', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          flightNumber
+          flightNumber,
+          flightDate
         }),
       });
 
@@ -277,12 +283,15 @@ export default function BookingConfirmationPage() {
             <Button 
               className="bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={handleDownloadTicket}
-              disabled={isProcessing}
+              disabled={isProcessing || !session?.user}
             >
               {isProcessing ? "Processing..." : "Download Ticket"}
             </Button>
           </CardFooter>
         </Card>
+        {!session?.user && (
+          <div className="text-red-500 mt-2">Please sign in to book a flight.</div>
+        )}
       </div>
     </div>
   );

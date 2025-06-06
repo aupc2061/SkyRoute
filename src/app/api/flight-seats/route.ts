@@ -8,17 +8,21 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const flightNumber = searchParams.get('flightNumber');
+    const flightDate = searchParams.get('flightDate');
 
-    if (!flightNumber) {
+    console.log('[GET] /api/flight-seats params:', { flightNumber, flightDate });
+
+    if (!flightNumber || !flightDate) {
       return NextResponse.json(
-        { error: 'Flight number is required' },
+        { error: 'Flight number and date are required' },
         { status: 400 }
       );
     }
 
     await connectDB();
 
-    const flightSeat = await FlightSeat.findOne({ flightNumber });
+    const flightSeat = await FlightSeat.findOne({ flightNumber, flightDate });
+    console.log('[GET] /api/flight-seats found document:', flightSeat);
     
     if (!flightSeat) {
       // If no document exists, all seats are available
@@ -53,11 +57,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const { flightNumber } = await request.json();
+    const { flightNumber, flightDate } = await request.json();
+    console.log('[POST] /api/flight-seats received:', { flightNumber, flightDate });
 
-    if (!flightNumber) {
+    if (!flightNumber || !flightDate) {
       return NextResponse.json(
-        { error: 'Flight number is required' },
+        { error: 'Flight number and date are required' },
         { status: 400 }
       );
     }
@@ -65,13 +70,16 @@ export async function POST(request: Request) {
     await connectDB();
 
     // Find or create flight seat document
-    let flightSeat = await FlightSeat.findOne({ flightNumber });
+    let flightSeat = await FlightSeat.findOne({ flightNumber, flightDate });
+    console.log('[POST] /api/flight-seats found:', flightSeat);
     
     if (!flightSeat) {
       flightSeat = new FlightSeat({
         flightNumber,
+        flightDate,
         takenSeats: [1] // Take the first seat if new document
       });
+      console.log('[POST] /api/flight-seats creating new document:', flightSeat);
     } else {
       const nextSeat = flightSeat.getNextAvailableSeat();
       if (!nextSeat) {
@@ -81,9 +89,11 @@ export async function POST(request: Request) {
         );
       }
       flightSeat.takenSeats.push(nextSeat);
+      console.log('[POST] /api/flight-seats updated takenSeats:', flightSeat.takenSeats);
     }
 
     await flightSeat.save();
+    console.log('[POST] /api/flight-seats saved document:', flightSeat);
 
     return NextResponse.json({
       success: true,

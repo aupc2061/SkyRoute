@@ -3,8 +3,11 @@ import mongoose from 'mongoose';
 const flightSeatSchema = new mongoose.Schema({
   flightNumber: { 
     type: String, 
-    required: true,
-    unique: true 
+    required: true
+  },
+  flightDate: {
+    type: String,
+    required: true // e.g., '2025-06-11'
   },
   takenSeats: [{
     type: Number,  // Storing seat numbers (1-30)
@@ -16,6 +19,9 @@ const flightSeatSchema = new mongoose.Schema({
     default: Date.now 
   }
 });
+
+// Compound unique index for flightNumber + flightDate
+flightSeatSchema.index({ flightNumber: 1, flightDate: 1 }, { unique: true });
 
 // Method to get next available seat
 flightSeatSchema.methods.getNextAvailableSeat = function() {

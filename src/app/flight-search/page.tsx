@@ -43,8 +43,9 @@ export default function FlightSearchPage() {
     const flightsWithSeats = await Promise.all(
       results.map(async (flight) => {
         const flightNumber = flight.itineraries[0].segments[0].number;
+        const flightDate = flight.itineraries[0].segments[0].departure.at.split('T')[0];
         try {
-          const response = await fetch(`/api/flight-seats?flightNumber=${flightNumber}`);
+          const response = await fetch(`/api/flight-seats?flightNumber=${flightNumber}&flightDate=${flightDate}`);
           const data = await response.json();
           return {
             ...flight,
