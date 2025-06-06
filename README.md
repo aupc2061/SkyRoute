@@ -46,7 +46,7 @@ A modern, full-stack web application for managing airline operations and booking
 
 ## Live Demo
 
-Visit our live application at: [https://skyroute.vercel.app](https://skyroute.vercel.app)
+Visit our live application at: [https://sky-route-nu.vercel.app/](https://skyroute.vercel.app)
 
 ## Getting Started
 
