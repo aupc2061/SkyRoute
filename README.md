@@ -2,6 +2,10 @@
 
 A modern, full-stack web application for managing airline operations and bookings. Built with Next.js, TypeScript, and Tailwind CSS, SkyRoute offers a seamless and smooth experience for customers.
 
+## Live Demo
+
+Visit our live application at:([https://skyroute.vercel.app](https://sky-route-nu.vercel.app/))
+
 ## Features
 
 ### Flight Management
@@ -42,9 +46,6 @@ A modern, full-stack web application for managing airline operations and booking
 - **ESLint & Prettier**: Code quality and formatting
 - **Jest & React Testing Library**: Testing framework
 
-## Live Demo
-
-Visit our live application at:([https://skyroute.vercel.app](https://sky-route-nu.vercel.app/))
 
 ## Getting Started
 
