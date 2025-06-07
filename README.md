@@ -10,7 +10,6 @@ A modern, full-stack web application for managing airline operations and booking
 - **Dynamic Pricing**: Automated price adjustments based on demand and seasonality
 
 ### Booking System
-- **Secure Payment Processing**: Integrated with Stripe for safe and reliable payments
 - **Multi-city Booking**: Support for complex itineraries with multiple stops
 - **Flexible Booking Management**: Easy modification and cancellation of bookings
 
