@@ -35,7 +35,6 @@ A modern, full-stack web application for managing airline operations and booking
 ### Backend
 - **MongoDB**: NoSQL database for flexible data storage
 - **NextAuth.js**: Authentication solution with multiple provider support
-- **Stripe**: Payment processing and subscription management
 - **Node.js**: Runtime environment for server-side operations
 
 ### DevOps & Tools
