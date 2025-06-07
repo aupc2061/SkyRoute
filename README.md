@@ -43,8 +43,7 @@ Visit our live application at:([https://skyroute.vercel.app](https://sky-route-n
 ### DevOps & Tools
 - **Vercel**: Hosting and deployment platform
 - **Git**: Version control and collaboration
-- **ESLint & Prettier**: Code quality and formatting
-- **Jest & React Testing Library**: Testing framework
+- **Postman & React Testing Library**: Testing framework
 
 
 ## Getting Started
