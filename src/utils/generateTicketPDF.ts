@@ -31,19 +31,19 @@ export const generateTicketPDF = (flight: Flight, passengerName: string, seatNum
   const firstSegment = flight.itineraries[0].segments[0];
   const lastSegment = flight.itineraries[0].segments[flight.itineraries[0].segments.length - 1];
 
-  // Set font
+  // Setting font
   doc.setFont("helvetica", "bold");
   doc.setFontSize(24);
   doc.text("Flight Ticket", 105, 20, { align: "center" });
 
-  // Passenger Information
+  // Displaying the Passenger Information
   doc.setFontSize(12);
   doc.text("Passenger Information", 20, 40);
   doc.setFont("helvetica", "normal");
   doc.text(`Name: ${passengerName}`, 20, 50);
   doc.text(`Seat: ${seatNumber}`, 20, 60);
 
-  // Flight Information
+  // Displaying the Flight Information
   doc.setFont("helvetica", "bold");
   doc.text("Flight Information", 20, 80);
   doc.setFont("helvetica", "normal");
@@ -62,7 +62,7 @@ export const generateTicketPDF = (flight: Flight, passengerName: string, seatNum
   doc.setFont("helvetica", "normal");
   doc.text(`Total: ${flight.price.currency} ${flight.price.total}`, 20, 170);
 
-  // Save the PDF
+  // Saving the PDF
   const fileName = `ticket_${firstSegment.carrierCode}${firstSegment.number}_${passengerName.replace(/\s+/g, '_')}.pdf`;
   doc.save(fileName);
 }; 
