@@ -12,7 +12,8 @@ Visit our live application at:([https://skyroute.vercel.app](https://sky-route-n
 - **Real-time Flight Tracking**: Monitor flight status, delays, and gate changes in real-time
 - **Interactive Flight Search**: Advanced search functionality with filters for dates, destinations, and prices
 - **Dynamic Pricing**: Automated price adjustments based on demand and seasonality
-
+- **Web Check-in**: Allows users to check in online up to 2 days before their flight
+  
 ### Booking System
 - **Multi-city Booking**: Support for complex itineraries with multiple stops
 - **Flexible Booking Management**: Easy modification and cancellation of bookings
