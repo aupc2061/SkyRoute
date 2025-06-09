@@ -11,7 +11,6 @@ Visit our live application at:([https://skyroute.vercel.app](https://sky-route-n
 ### Flight Management
 - **Real-time Flight Tracking**: Monitor flight status, delays, and gate changes in real-time
 - **Interactive Flight Search**: Advanced search functionality with filters for dates, destinations, and prices
-- **Dynamic Pricing**: Automated price adjustments based on demand and seasonality
   
 ### Booking System
 - **Multi-city Booking**: Support for complex itineraries with multiple stops
@@ -25,7 +24,6 @@ Visit our live application at:([https://skyroute.vercel.app](https://sky-route-n
 
 ### AI Travel Assistant
 - **Smart Recommendations**: AI-powered suggestions for flights based on user preferences
-- **24/7 Support**: Automated assistance for common queries and issues
 
 ## Tech Stack
 
