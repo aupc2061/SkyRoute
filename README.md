@@ -28,10 +28,9 @@ Visit our live application at:([https://skyroute.vercel.app](https://sky-route-n
 ## Tech Stack
 
 ### Frontend
-- **Next.js **: React framework for production-grade applications
+- **Next.js**: React framework for production-grade applications
 - **TypeScript**: Enhance code quality and developer experience
 - **Tailwind CSS**: Utility-first CSS framework for modern designs
-- **Shadcn UI**: High-quality UI components
 - **React Query**: Efficient data fetching and cache management
 
 ### Backend
